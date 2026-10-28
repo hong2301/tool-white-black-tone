@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>白黑调色 · 压力测试</title>
+<style>
+  body { margin:0; background:#fafafa; color:#1f2328; font:14px/1.6 -apple-system,"Segoe UI","PingFang SC",sans-serif; }
+  .wrap { padding: 20px; }
+  .card {
+    background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:12px;
+    box-shadow: 0 1px 3px rgba(16,24,40,.06); margin-bottom:10px;
+  }
+  .card h4 { margin:0 0 6px; font-size:13px; color:#0f1115; }
+  .card p { margin:0; color:#6b7280; font-size:12px; }
+  .chip { display:inline-block; padding:2px 8px; border-radius:99px; background:#eef2ff; color:#3b5bdb; font-size:11px; margin-right:4px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .thumb { width:28px; height:28px; border-radius:8px; background:linear-gradient(135deg,#fff,#e9edf5); border:1px solid #e5e7eb; }
+  svg { display:block; }
+  #panel {
+    position:fixed; right:16px; bottom:16px; width:250px; background:#15161b; color:#e6e6ee;
+    border-radius:12px; padding:12px; font-size:12px; z-index:9999; box-shadow:0 16px 40px rgba(0,0,0,.5);
+  }
+  #panel button { width:100%; margin-bottom:6px; padding:7px; border-radius:8px; cursor:pointer;
+    background:#242530; color:#c9c9d8; border:1px solid #30313d; font-size:12px; }
+  #panel button.on { background:#2f6bff; color:#fff; border-color:transparent; }
+  #panel pre { margin:0; max-height:200px; overflow:auto; font-size:10px; line-height:1.55;
+    background:#0e0f13; border-radius:8px; padding:8px; color:#9aa3b8; white-space:pre-wrap; }
+</style>
+</head>
+<body>
+<div class="wrap" id="root"></div>
+<div id="panel">
+  <button id="on">开启</button>
+  <button id="off">关闭</button>
+  <button id="rescan">重新扫描</button>
+  <pre id="out">初始化…</pre>
+</div>
+
+<script>
+  // 生成一个「像真实站点」的大页面：3000+ 元素、嵌套卡片、渐变、阴影、SVG 图标、表格
+  (function build() {
+    const root = document.getElementById('root');
+    const frag = document.createDocumentFragment();
+    const icon = (c) =>
+      `<svg width="14" height="14" viewBox="0 0 24 24" fill="${c}"><path d="M12 2l3 7h7l-5.5 4.5L18 21l-6-4-6 4 1.5-7.5L2 9h7z"/></svg>`;
+    const colors = ['#111827', '#374151', '#6b7280', '#9ca3af', '#3b5bdb', '#0f766e', '#b91c1c'];
+    for (let i = 0; i < 400; i++) {
+      const card = document.createElement('div');
+      card.className = 'card';
+      const c = colors[i % colors.length];
+      card.innerHTML =
+        `<h4>${icon(c)} 条目 #${i}</h4>` +
+        `<p>正文文字，颜色 #6b7280，卡片背景 #ffffff，边框 #e5e7eb，阴影 rgba(16,24,40,.06)。</p>` +
+        `<div class="row" style="margin-top:8px">
+           <span class="thumb"></span>
+           <span class="chip">标签A</span><span class="chip">标签B</span>
+           <span style="color:${c};font-weight:600">强调 ${c}</span>
+         </div>`;
+      for (let j = 0; j < 6; j++) {
+        const p = document.createElement('p');
+        p.style.color = j % 2 ? '#9ca3af' : '#374151';
+        p.textContent = `子段落 ${i}-${j}，用于堆叠元素数量。`;
+        card.appendChild(p);
+      }
+      frag.appendChild(card);
+    }
+    root.appendChild(frag);
+  })();
+</script>
+<script src="mock-chrome.js"></script>
+<script src="../src/color.js"></script>
+<script src="../src/engine.js"></script>
+<script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const out = $('out');
+    function dump() {
+      const r = window.__dmDemo.ask({ type: 'dm:hello' });
+      const st = r.stats;
+      const t = st.pageTone || {};
+      out.textContent =
+        `元素总数=${document.querySelectorAll('*').length}\n` +
+        `扫描元素=${st.elements} 色数=${st.totalColors}\n` +
+        `耗时=${st.ms}ms 写入=${st.applied}\n` +
+        `跳过=${st.skipped} 深色占比=${Math.round((t.ratio || 0) * 100)}%\n` +
+        `内联样式元素=${document.querySelectorAll('[style*="!important"]').length}`;
+      $('on').classList.toggle('on', !!r.enabled);
+      $('off').classList.toggle('on', !r.enabled);
+    }
+    $('on').onclick = () => { window.__dmDemo.update({ enabled: true, sites: {} }); setTimeout(dump, 300); };
+    $('off').onclick = () => { window.__dmDemo.update({ enabled: false, sites: {} }); setTimeout(dump, 300); };
+    $('rescan').onclick = () => { window.__dmDemo.ask({ type: 'dm:rescan' }); setTimeout(dump, 100); };
+    setTimeout(dump, 500);
+    window.__dump = dump;
+  })();
+</script>
+</body>
+</html>

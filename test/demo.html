@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>白黑调色 · 演示页</title>
+<style>
+  /* 故意用 CSS 变量写主题，用来验证「变量覆盖」是否生效 */
+  :root {
+    --demo-bg: #f5f6f8;
+    --demo-surface: #ffffff;
+    --demo-border: #e4e7ec;
+    --demo-text: #1a1a1a;
+    --demo-muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 14px/1.65 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    color: var(--demo-text);
+    background: var(--demo-bg);
+  }
+  .page { max-width: 960px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  /* 深色 hero —— 用来验证「本来就是深色」不会被搞坏 */
+  .hero {
+    border-radius: 16px;
+    background: linear-gradient(135deg, #1b2431 0%, #2d3a4d 100%);
+    color: #ffffff;
+    padding: 26px 28px;
+    margin-bottom: 22px;
+    box-shadow: 0 12px 30px rgba(20, 30, 50, .25);
+  }
+  .hero h1 { margin: 0 0 6px; font-size: 24px; font-weight: 700; letter-spacing: .3px; }
+  .hero p { margin: 0; color: #a8b6c9; font-size: 13.5px; }
+
+  h2 { font-size: 16px; margin: 26px 0 12px; color: #101012; }
+  .muted { color: #6b7280; }
+  .tiny { font-size: 12px; color: #8b94a3; }
+
+  .card {
+    background: var(--demo-surface);
+    border: 1px solid var(--demo-border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin-bottom: 14px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, .05);
+  }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 8px 16px; border-radius: 9px; border: 1px solid transparent;
+    font-size: 13px; cursor: pointer; font-weight: 500;
+  }
+  .btn-primary { background: #2f6bff; color: #ffffff; }
+  .btn-primary:hover { background: #2659d9; }
+  .btn-ghost { background: #ffffff; border-color: #d7dbe3; color: #333a45; }
+  .btn-ghost:hover { background: #f7f8fa; }
+  .btn-soft { background: #eaf0ff; color: #2f6bff; }
+
+  .tag {
+    display: inline-block; padding: 2px 9px; border-radius: 999px;
+    font-size: 11.5px; background: #eef1f6; color: #55607a;
+  }
+  .tag-ok { background: #e6f7ee; color: #127a4a; }
+  .tag-warn { background: #fdf0e3; color: #96550a; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #eceff4; }
+  th { color: #59616e; font-weight: 600; background: #fafbfd; }
+  tr:hover td { background: #f8fafc; }
+
+  input[type="text"], textarea, select {
+    width: 100%; padding: 8px 11px; font: inherit; color: #1a1a1a;
+    background: #ffffff; border: 1px solid #d7dbe3; border-radius: 8px;
+    outline: none;
+  }
+  input[type="text"]:focus { border-color: #2f6bff; box-shadow: 0 0 0 3px rgba(47, 107, 255, .15); }
+
+  .swatches { display: flex; gap: 8px; flex-wrap: wrap; }
+  .sw { width: 64px; }
+  .sw i { display: block; height: 34px; border-radius: 8px; border: 1px solid #e4e7ec; }
+  .sw span { display: block; font-size: 10.5px; color: #8b94a3; margin-top: 3px; }
+
+  .avatar {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #ffd9a0, #ff9a9e);
+    display: inline-block; vertical-align: middle;
+  }
+  .row { display: flex; align-items: center; gap: 10px; }
+
+  /* 控制面板 */
+  .ctl {
+    position: fixed; right: 18px; bottom: 18px; width: 268px;
+    background: #16171c; color: #e8e8ef; border-radius: 14px;
+    padding: 12px; font-size: 12px; z-index: 99999;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .45);
+  }
+  .ctl h3 { margin: 0 0 8px; font-size: 12.5px; letter-spacing: .4px; }
+  .ctl .r { display: flex; gap: 6px; margin-bottom: 8px; }
+  .ctl button {
+    flex: 1; padding: 6px 0; border-radius: 8px; cursor: pointer; font-size: 12px;
+    background: #23242b; color: #b9bcc9; border: 1px solid #2e3038;
+  }
+  .ctl button.on { background: #2f6bff; color: #fff; border-color: transparent; }
+  .ctl pre {
+    margin: 0; max-height: 148px; overflow: auto; font-size: 10px; line-height: 1.5;
+    background: #0f1013; border-radius: 8px; padding: 7px 8px; color: #9aa3b8;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+<div class="page">
+  <section class="hero">
+    <h1>白黑调色 · 演示页</h1>
+    <p>这段是深色背景 + 白色文字，转换后应仍然保持深色底和浅色字。</p>
+  </section>
+
+  <h2>卡片与表格</h2>
+  <div class="grid">
+    <div class="card">
+      <h3 style="margin:0 0 6px;font-size:15px;color:#101012;">主标题文本</h3>
+      <p class="muted" style="margin:0 0 10px;">正文段落使用中灰 #6b7280，边框 #e4e7ec，背景纯白 #ffffff。</p>
+      <div class="row">
+        <button class="btn btn-primary">主要按钮</button>
+        <button class="btn btn-ghost">次要按钮</button>
+        <button class="btn btn-soft">柔和按钮</button>
+      </div>
+      <p class="tiny" style="margin:10px 0 0;">浅灰提示文本 #8b94a3</p>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-bottom:10px;">
+        <span class="avatar"></span>
+        <div>
+          <div style="color:#101012;font-weight:600;">用户名</div>
+          <div class="tiny">注册于 2024-06-01</div>
+        </div>
+        <span class="tag tag-ok">正常</span>
+      </div>
+      <table>
+        <thead><tr><th>项目</th><th>状态</th></tr></thead>
+        <tbody>
+          <tr><td>浅色背景行</td><td><span class="tag">默认</span></td></tr>
+          <tr><td>浅灰底行</td><td><span class="tag tag-warn">警告</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <h2>色板</h2>
+  <div class="card">
+    <div class="swatches">
+      <div class="sw"><i style="background:#ffffff"></i><span>#ffffff</span></div>
+      <div class="sw"><i style="background:#f5f6f8"></i><span>#f5f6f8</span></div>
+      <div class="sw"><i style="background:#eef1f6"></i><span>#eef1f6</span></div>
+      <div class="sw"><i style="background:#e4e7ec"></i><span>#e4e7ec</span></div>
+      <div class="sw"><i style="background:#8b94a3"></i><span>#8b94a3</span></div>
+      <div class="sw"><i style="background:#6b7280"></i><span>#6b7280</span></div>
+      <div class="sw"><i style="background:#333a45"></i><span>#333a45</span></div>
+      <div class="sw"><i style="background:#1a1a1a"></i><span>#1a1a1a</span></div>
+      <div class="sw"><i style="background:#2f6bff"></i><span>#2f6bff</span></div>
+      <div class="sw"><i style="background:#e6f7ee"></i><span>#e6f7ee</span></div>
+    </div>
+  </div>
+
+  <h2>表单</h2>
+  <div class="card">
+    <div class="grid">
+      <input type="text" placeholder="输入框" value="hello" />
+      <select><option>下拉选项</option></select>
+      <textarea rows="3">多行文本域，测试 background + color + border 同时转换。</textarea>
+      <div><span class="tag">标签一</span> <span class="tag">标签二</span></div>
+    </div>
+  </div>
+
+  <h2>渐变</h2>
+  <div class="card" style="background:linear-gradient(180deg,#ffffff 0%,#eef1f6 100%);">
+    <p style="margin:0;" class="muted">这块的背景是白 → 浅灰的渐变，文字是中灰。</p>
+  </div>
+</div>
+
+<div class="ctl">
+  <h3>控制面板（演示）</h3>
+  <div class="r">
+    <button id="t-on">开启</button>
+    <button id="t-off">关闭</button>
+  </div>
+  <div class="r">
+    <button id="t-autoskip">自动跳过</button>
+  </div>
+  <div class="r">
+    <button id="rescan">重新扫描</button>
+  </div>
+  <pre id="out">初始化…</pre>
+</div>
+
+<script src="mock-chrome.js"></script>
+<script src="../src/color.js"></script>
+<script src="../src/engine.js"></script>
+<script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const out = $('out');
+
+    function syncBtns() {
+      const s = window.__dmDemo.read();
+      const on = !!s.enabled;
+      $('t-on').classList.toggle('on', on);
+      $('t-off').classList.toggle('on', !on);
+      $('t-autoskip').classList.toggle('on', s.autoSkip !== false);
+    }
+
+    function dump() {
+      const r = window.__dmDemo.ask({ type: 'dm:hello' });
+      if (!r || !r.stats) { out.textContent = '无数据'; return; }
+      const st = r.stats;
+      const fmt = (arr) =>
+        arr.map((v) => `${v.hex} → ${v.mapped}  ×${v.count} [${v.role}]`).join('\n');
+      out.textContent =
+        `enabled=${r.enabled} theme=${r.theme}\n` +
+        `元素=${st.elements} 颜色=${st.totalColors} 耗时=${st.ms}ms${st.truncated ? ' (截断)' : ''}\n\n` +
+        `— 白色系 → 深色 —\n${fmt(st.white) || '(空)'}\n\n` +
+        `— 黑色系 → 浅色 —\n${fmt(st.black) || '(空)'}`;
+      syncBtns();
+    }
+
+    $('t-on').onclick = () => { window.__dmDemo.update({ enabled: true, sites: { demo: true } }); setTimeout(dump, 150); };
+    $('t-off').onclick = () => { window.__dmDemo.update({ enabled: false, sites: { demo: false } }); setTimeout(dump, 150); };
+    $('t-autoskip').onclick = () => {
+      const s = window.__dmDemo.read();
+      window.__dmDemo.update({ autoSkip: s.autoSkip === false });
+      setTimeout(dump, 300);
+    };
+    $('rescan').onclick = () => {
+      const r = window.__dmDemo.ask({ type: 'dm:rescan' });
+      setTimeout(dump, 60);
+      return r;
+    };
+
+    setTimeout(dump, 400);
+    window.__dump = dump;
+  })();
+</script>
+</body>
+</html>

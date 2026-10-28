@@ -1,0 +1,11 @@
+# 依赖
+node_modules/
+
+# 生成物（由 scripts/make-popup-preview.js 产出，带时间戳，不入库）
+test/popup.html
+
+# 系统垃圾
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log

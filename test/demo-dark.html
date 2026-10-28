@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<title>白黑调色 · 深色页（自动跳过）</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh;
+    font: 14px/1.65 -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+    color: #e7e9ee;
+    background: #0f1115;
+  }
+  .page { max-width: 900px; margin: 0 auto; padding: 32px 24px 90px; }
+  header.site {
+    background: #12151b; border-bottom: 1px solid #23272f;
+    padding: 14px 24px; display: flex; align-items: center; gap: 14px;
+  }
+  header.site b { color: #fff; font-size: 15px; }
+  header.site nav { color: #8d94a3; font-size: 13px; }
+  .card {
+    background: #161a21; border: 1px solid #242932; border-radius: 12px;
+    padding: 18px 20px; margin-bottom: 14px;
+  }
+  h2 { font-size: 16px; color: #f2f4f8; margin: 22px 0 12px; }
+  .muted { color: #8d94a3; }
+  a { color: #6ea8ff; }
+  .btn {
+    display: inline-block; padding: 8px 16px; border-radius: 9px; border: 1px solid #2c333f;
+    background: #1c222b; color: #dfe4ec; font-size: 13px; cursor: pointer;
+  }
+  .btn.primary { background: #2f6bff; border-color: transparent; color: #fff; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid #23272f; }
+  th { color: #9aa2b1; background: #13161c; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  .ctl {
+    position: fixed; right: 18px; bottom: 18px; width: 268px;
+    background: #16171c; color: #e8e8ef; border-radius: 14px;
+    padding: 12px; font-size: 12px; z-index: 99999;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .55);
+  }
+  .ctl h3 { margin: 0 0 8px; font-size: 12.5px; }
+  .ctl .r { display: flex; gap: 6px; margin-bottom: 8px; }
+  .ctl button {
+    flex: 1; padding: 6px 0; border-radius: 8px; cursor: pointer; font-size: 12px;
+    background: #23242b; color: #b9bcc9; border: 1px solid #2e3038;
+  }
+  .ctl button.on { background: #2f6bff; color: #fff; border-color: transparent; }
+  .ctl pre {
+    margin: 0; max-height: 148px; overflow: auto; font-size: 10px; line-height: 1.5;
+    background: #0f1013; border-radius: 8px; padding: 7px 8px; color: #9aa3b8;
+    white-space: pre-wrap;
+  }
+</style>
+</head>
+<body>
+<header class="site"><b>深色站点</b><nav>首页 · 文档 · 关于</nav></header>
+<div class="page">
+  <h2>这个页面本来就是深色</h2>
+  <div class="card">
+    <p class="muted" style="margin:0 0 10px;">
+      整页背景 #0f1115，卡片 #161a21，文字 #e7e9ee。插件应该检测到「深色为主」并自动跳过，
+      不能二次转换，否则会把深色页糟蹋成别的样子。
+    </p>
+    <button class="btn primary">主要按钮</button>
+    <button class="btn">次要按钮</button>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <table>
+        <thead><tr><th>列一</th><th>列二</th></tr></thead>
+        <tbody>
+          <tr><td>数据行 A</td><td class="muted">正常</td></tr>
+          <tr><td>数据行 B</td><td class="muted">正常</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="card">
+      <p style="margin:0 0 8px;">一段正文，含 <a href="#">一个链接</a>。</p>
+      <p class="muted" style="margin:0;">次要说明文字。</p>
+    </div>
+  </div>
+</div>
+
+<div class="ctl">
+  <h3>控制面板（深色页）</h3>
+  <div class="r">
+    <button id="t-on">开启插件</button>
+    <button id="t-off">关闭插件</button>
+  </div>
+  <div class="r">
+    <button id="t-autoskip">自动跳过</button>
+  </div>
+  <div class="r"><button id="t-force">强制应用</button></div>
+  <div class="r"><button id="rescan">重新扫描</button></div>
+  <pre id="out">初始化…</pre>
+</div>
+
+<script src="mock-chrome.js"></script>
+<script src="../src/color.js"></script>
+<script src="../src/engine.js"></script>
+<script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const out = $('out');
+
+    function sync() {
+      const s = window.__dmDemo.read();
+      $('t-on').classList.toggle('on', !!s.enabled);
+      $('t-off').classList.toggle('on', !s.enabled);
+      $('t-autoskip').classList.toggle('on', s.autoSkip !== false);
+      $('t-force').classList.toggle('on', !!(s.force && s.force.demo));
+    }
+
+    function dump() {
+      const r = window.__dmDemo.ask({ type: 'dm:hello' });
+      if (!r || !r.stats) { out.textContent = '无数据'; return; }
+      const st = r.stats;
+      const t = st.pageTone || {};
+      const pct = Math.round((t.ratio || 0) * 100);
+      out.textContent =
+        `enabled=${r.enabled} skipped=${st.skipped} forced=${st.forced}\n` +
+        `基调: 深色 ${pct}% / 浅色 ${100 - pct}%\n` +
+        `元素=${st.elements} 已写入样式=${st.applied} 耗时=${st.ms}ms\n` +
+        `內联样式元素数=${document.querySelectorAll('[style*="!important"]').length}`;
+      sync();
+    }
+
+    $('t-on').onclick = () => { window.__dmDemo.update({ enabled: true, sites: { demo: true } }); setTimeout(dump, 250); };
+    $('t-off').onclick = () => { window.__dmDemo.update({ enabled: false, sites: { demo: false } }); setTimeout(dump, 250); };
+    $('t-autoskip').onclick = () => {
+      const s = window.__dmDemo.read();
+      window.__dmDemo.update({ autoSkip: s.autoSkip === false });
+      setTimeout(dump, 300);
+    };
+    $('t-force').onclick = () => {
+      const s = window.__dmDemo.read();
+      const f = { ...(s.force || {}) };
+      if (f.demo) delete f.demo; else f.demo = true;
+      window.__dmDemo.update({ force: f });
+      setTimeout(dump, 300);
+    };
+    $('rescan').onclick = () => { window.__dmDemo.ask({ type: 'dm:rescan' }); setTimeout(dump, 80); };
+
+    setTimeout(dump, 400);
+  })();
+</script>
+</body>
+</html>
